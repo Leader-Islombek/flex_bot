@@ -1,135 +1,92 @@
 import sqlite3
+import os
+from datetime import datetime
+from pathlib import Path
+
+# Database file path
+DB_PATH = Path("flex.db")
 
 def connect_db():
-    """Bazaga ulanish va jadvallarni yaratish"""
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    
-    # Users jadvalini yaratish (AUTOINCREMENT qo'shildi)
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tg_id INTEGER UNIQUE,
-        fullname TEXT,
-        birthdate TEXT,
-        join_date TEXT
-    )
-    """)
-    
-    # Messages jadvalini yaratish (FOREIGN KEY qo'shildi)
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tg_id INTEGER,
-        message TEXT,
-        date TEXT,
-        FOREIGN KEY (tg_id) REFERENCES users(tg_id)
-    )
-    """)
-    
-    conn.commit()
+    """Create and return a database connection"""
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
-import os
 
 def init_db():
-    """Baza fayli va jadvallarni ishga tushirish"""
-    # Baza faylini tekshirish va yaratish
-    if not os.path.exists('flex.db'):
-        open('flex.db', 'w').close()
-    
-    with sqlite3.connect('flex.db') as conn:
+    """Initialize database tables"""
+    with connect_db() as conn:
         cur = conn.cursor()
         
-        # Users jadvalini yaratish
+        # Users table
         cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tg_id INTEGER UNIQUE,
-            fullname TEXT,
-            birthdate TEXT,
-            join_date TEXT
+            tg_id INTEGER UNIQUE NOT NULL,
+            full_name TEXT NOT NULL,
+            birth_date TEXT,
+            join_date TEXT DEFAULT CURRENT_TIMESTAMP,
+            username TEXT
         )
         """)
         
-        # Messages jadvalini yaratish
+        # Messages table
         cur.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tg_id INTEGER,
-            message TEXT,
-            date TEXT
+            tg_id INTEGER NOT NULL,
+            message_text TEXT NOT NULL,
+            sent_date TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tg_id) REFERENCES users(tg_id)
         )
+        """)
+        
+        # Create indexes
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users(tg_id)
+        """)
+        
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_messages_tg_id ON messages(tg_id)
         """)
         
         conn.commit()
 
-# Dastur ishga tushganda baza yaratilishini ta'minlash
-init_db()
-
-def add_user(tg_id, fullname, birthdate=None):
-    """Foydalanuvchi qo'shish (to'liq versiya)"""
-    try:
-        with sqlite3.connect('flex.db') as conn:
-            cur = conn.cursor()
-            # JOIN_DATE avtomatik to'ldiriladi
-            cur.execute(
-                "INSERT OR REPLACE INTO users (tg_id, fullname, birthdate) VALUES (?, ?, ?)",
-                (tg_id, fullname, birthdate)
-            )
-            conn.commit()
-            print(f"✅ Foydalanuvchi qo'shildi: {tg_id} | {fullname}")  # Debug
-            return True
-    except Exception as e:
-        print(f"❌ Xatolik (add_user): {e}")
-        return False
-def get_users():
-    """Barcha foydalanuvchilarni olish"""
-    init_db()  # Jadval mavjudligini qo'shimcha tekshirish
-    with sqlite3.connect('flex.db') as conn:
+def add_user_if_not_exists(tg_id, full_name, birth_date=None, username=None):
+    """Add user if not exists in database"""
+    with connect_db() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users")
+        cur.execute(
+            "INSERT OR IGNORE INTO users (tg_id, full_name, birth_date, username) VALUES (?, ?, ?, ?)",
+            (tg_id, full_name, birth_date, username)
+        )
+        conn.commit()
+        return cur.rowcount > 0
+
+def get_users():
+    """Get all users from database"""
+    with connect_db() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users ORDER BY join_date DESC")
         return cur.fetchall()
 
-def log_message(tg_id, message, date):
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    cur.execute("INSERT INTO messages (tg_id, message, date) VALUES (?, ?, ?)",
-                (tg_id, message, date))
-    conn.commit()
-    conn.close()
+def get_user_count():
+    """Get total number of users"""
+    with connect_db() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM users")
+        return cur.fetchone()[0]
 
-def get_messages():
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM messages")
-    messages = cur.fetchall()
-    conn.close()
-    return messages
+def log_message(tg_id, message_text):
+    """Log a message to database"""
+    with connect_db() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO messages (tg_id, message_text) VALUES (?, ?)",
+            (tg_id, message_text)
+        )
+        conn.commit()
+        return cur.lastrowid
 
-def delete_user(tg_id):
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    cur.execute("DELETE FROM users WHERE tg_id = ?", (tg_id,))
-    conn.commit()
-    conn.close()
-    
-def get_messages_count():
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM messages")
-    count = cur.fetchone()[0]
-    conn.close()
-    return count
-
-def get_top_user():
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT tg_id, COUNT(*) as total FROM messages
-        GROUP BY tg_id
-        ORDER BY total DESC
-        LIMIT 1
-    """)
-    result = cur.fetchone()
-    conn.close()
-    return result
+# Initialize database when module is imported
+init_db()

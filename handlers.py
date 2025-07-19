@@ -2,10 +2,10 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from datetime import datetime
-from database import get_users, add_user
+from database import get_users, add_user_if_not_exists, get_user_count
 from config import ADMIN_ID
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-import sqlite3
+
 # --- States ---
 class Broadcast(StatesGroup):
     waiting_message = State()
@@ -16,22 +16,19 @@ class ContactAdmin(StatesGroup):
 # --- /start handler ---
 async def start_handler(message: types.Message):
     user = message.from_user
-    
-    # Foydalanuvchini bazaga qo'shamiz
-    added = add_user(
+    added = add_user_if_not_exists(
         tg_id=user.id,
-        fullname=user.full_name,
-        birthdate=None  # Keyinroq to'ldiriladi
+        full_name=user.full_name,
+        birth_date=None,
+        username=user.username
     )
-    
-    # Oddiy user tugmalari
+
     user_buttons = [
         [KeyboardButton(text="📖 Flex haqida")],
         [KeyboardButton(text="📝 Yoshni tekshirish")],
         [KeyboardButton(text="✉️ Admin'ga xabar")]
     ]
 
-    # Agar admin bo‘lsa, admin panel tugmasini qo‘sh
     if message.from_user.id == ADMIN_ID:
         user_buttons.append([KeyboardButton(text="👤 Admin panel")])
 
@@ -40,108 +37,155 @@ async def start_handler(message: types.Message):
         resize_keyboard=True
     )
 
-    await message.answer(
-        "👋 Assalomu alaykum!\n\nBotga xush kelibsiz.\nFlex haqida bilish uchun tugmalarni bosing.",
-        reply_markup=keyboard
-    )
+    welcome_text = "👋 Assalomu alaykum!\n\nBotga xush kelibsiz."
+    if added:
+        welcome_text += "\n\n✅ Siz ro'yxatga olindingiz."
+    
+    await message.answer(welcome_text, reply_markup=keyboard)
 
-@dp.message_handler(commands=['dbstatus'])
-async def db_status(message: types.Message):
-    with sqlite3.connect('flex.db') as conn:
-        cur = conn.cursor()
-        
-        # Jadval mavjudligi
-        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tables = [t[0] for t in cur.fetchall()]
-        
-        # Foydalanuvchilar soni
-        cur.execute("SELECT COUNT(*) FROM users")
-        user_count = cur.fetchone()[0]
-        
-        await message.answer(
-            f"📊 Database status:\n"
-            f"Jadvallar: {', '.join(tables) or 'Yoʻq'}\n"
-            f"Foydalanuvchilar: {user_count}\n"
-            f"Admin ID: {ADMIN_ID}"
-        )
+# --- Flex haqida info ---
+async def flex_info(message: types.Message):
+    text = """
+🇺🇸 *FLEX nima?*
 
-# --- FLEX yosh tekshirish funksiyasi ---
+FLEX (Future Leaders Exchange) - AQSh hukumati tomonidan moliyalashtiriladigan dastur bo'lib, o'rta maktab o'quvchilarini 1 yil davomida Amerika maktabida o'qish va amerikalik oilada yashash imkonini beradi.
+
+✅ Xarajatlar to'liq qoplanadi  
+✅ Ingliz tilini mukammal o'rganish  
+✅ Yetakchilik va madaniyat almashinuvi tajribasi
+
+🔗 *Batafsil ma'lumot:* [Amerika Kengashlari FLEX bo'limi](https://americancouncils.org.uz/flex)
+"""
+    await message.answer(text, parse_mode="Markdown")
+
+# --- Yosh tekshirish so'rovi ---
+async def ask_birthdate(message: types.Message):
+    await message.answer("🗓 Tug'ilgan sanangizni kiriting (YYYY-MM-DD) masalan 2009-05-15:")
+
+# --- Yoshni hisoblash ---
 async def check_age(message: types.Message):
     try:
         birthdate = datetime.strptime(message.text, "%Y-%m-%d")
-    except:
-        await message.answer("❌ Tug‘ilgan sanani YYYY-MM-DD formatida yozing.")
+    except ValueError:
+        await message.answer("❌ Noto'g'ri format. Iltimos, YYYY-MM-DD formatida kiriting.")
         return
 
     today = datetime.today()
     age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
     total_months = (today.year - birthdate.year) * 12 + today.month - birthdate.month
 
-    # FLEX uchun tekshirayotgan yil: 2026
-    check_date = datetime(2026, 8, 1)
-    flex_age = check_date.year - birthdate.year - ((check_date.month, check_date.day) < (birthdate.month, birthdate.day))
+    # FLEX 2026 uchun tekshirish
+    flex_check_date = datetime(2026, 8, 1)
+    flex_age = flex_check_date.year - birthdate.year - ((flex_check_date.month, flex_check_date.day) < (birthdate.month, birthdate.day))
 
-    # Sentabr cutoff
-    cutoff_date = datetime(2008, 9, 1)
-
-    # FLEX eligibility tekshirish
-    if birthdate < cutoff_date:
-        flex_result = "❌ Afsuski, FLEX uchun yoshingiz mos emas (2008-yil sentabrdan oldin tug‘ilgansiz)."
-    elif flex_age < 15:
-        flex_result = "❌ Afsuski, FLEX uchun yoshingiz juda kichik."
+    if flex_age < 15:
+        result = "❌ Afsuski, FLEX uchun yoshingiz juda kichik."
     elif flex_age > 17:
-        flex_result = "❌ Afsuski, FLEX uchun yoshingiz juda katta."
+        result = "❌ Afsuski, FLEX uchun yoshingiz juda katta."
     else:
-        flex_result = "✅ Tabriklaymiz! Siz FLEX uchun yosh talabiga mos kelasiz."
+        result = "✅ Tabriklaymiz! Siz FLEX uchun yosh talabiga mos kelasiz."
 
-    text = f"""
-📅 Tug‘ilgan sana: {birthdate.strftime('%Y-%m-%d')}
+    response = f"""
+📅 Tug'ilgan sana: {birthdate.strftime('%Y-%m-%d')}
 🔢 Yosh: {age}
-🗓 O‘tgan oylar: {total_months}
+🗓 O'tgan oylar: {total_months}
 
 🎯 FLEX tekshirish natijasi:
-{flex_result}
+{result}
 """
-    await message.answer(text)
+    await message.answer(response)
 
-# --- Admin broadcast boshlash handler ---
-async def broadcast_handler(message: types.Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
-        await message.answer("⛔ Siz admin emassiz.")
+# --- Admin panel ---
+async def admin_panel(message: types.Message):
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="👥 Userlar ro'yxati")],
+            [KeyboardButton(text="✉️ Broadcast")],
+            [KeyboardButton(text="📊 Statistika")],
+            [KeyboardButton(text="🔙 Ortga")]
+        ],
+        resize_keyboard=True
+    )
+    await message.answer("👤 *Admin panel*\n\nKerakli bo'limni tanlang:", reply_markup=keyboard, parse_mode="Markdown")
+
+# --- Userlar ro'yxati ---
+async def user_list(message: types.Message):
+    users = get_users()
+    if not users:
+        await message.answer("🚫 Hech qanday foydalanuvchi topilmadi.")
         return
 
+    text = "👥 <b>Bot foydalanuvchilari:</b>\n\n"
+    for idx, user in enumerate(users, 1):
+        user_id = user[1]  # tg_id
+        full_name = user[2]  # full_name
+        username = f"@{user[5]}" if user[5] else "Yo'q"  # username
+        join_date = user[4]  # join_date
+        
+        text += (
+            f"{idx}. <b>ID:</b> {user_id}\n"
+            f"   <b>Ism:</b> {full_name}\n"
+            f"   <b>Username:</b> {username}\n"
+            f"   <b>Qo'shilgan:</b> {join_date}\n\n"
+        )
+
+    await message.answer(text, parse_mode="HTML")
+
+# --- Broadcast ---
+async def broadcast_handler(message: types.Message, state: FSMContext):
     await message.answer("✉️ Yuboriladigan xabar matnini yozing:")
     await state.set_state(Broadcast.waiting_message)
 
-# --- Admin broadcast process handler ---
-async def process_broadcast(message: types.Message, state: FSMContext, bot):
+async def process_broadcast(message: types.Message, state: FSMContext):
     users = get_users()
+    if not users:
+        await message.answer("⚠️ Bazada foydalanuvchilar topilmadi!")
+        await state.clear()
+        return
+
     success = 0
-
-    for u in users:
+    for user in users:
         try:
-            await bot.send_message(u[1], message.text)
+            await message.bot.send_message(user[1], message.text)
             success += 1
-        except:
-            continue
+        except Exception as e:
+            print(f"Xatolik user {user[1]}ga xabar yuborishda: {e}")
 
-    await message.answer(f"✅ Xabar {success} ta foydalanuvchiga yuborildi.")
+    await message.answer(f"✅ Xabar {success}/{len(users)} ta foydalanuvchiga yuborildi.")
     await state.clear()
 
-# --- Userdan admin'ga xabar boshlash handler ---
+# --- Statistika ---
+async def stats(message: types.Message):
+    count = get_user_count()
+    await message.answer(f"📊 *Bot statistikasi:*\n\n👥 Jami foydalanuvchilar: {count}", parse_mode="Markdown")
+
+# --- Admin'ga xabar ---
 async def contact_admin_handler(message: types.Message, state: FSMContext):
     await message.answer("✉️ Admin'ga yuboriladigan xabar matnini yozing:")
     await state.set_state(ContactAdmin.waiting_message)
 
-# --- Userdan admin'ga xabar process handler ---
-async def process_contact_admin(message: types.Message, state: FSMContext, bot):
-    admin_id = ADMIN_ID
+async def process_contact_admin(message: types.Message, state: FSMContext):
     text = f"📨 *Yangi xabar userdan:*\n\n"
-    text += f"👤 [{message.from_user.full_name}](tg://user?id={message.from_user.id})\n"
+    text += f"👤 {message.from_user.full_name} (ID: {message.from_user.id})\n"
     if message.from_user.username:
         text += f"🔗 @{message.from_user.username}\n"
     text += f"\n💬 {message.text}"
 
-    await bot.send_message(admin_id, text, parse_mode="Markdown")
+    await message.bot.send_message(ADMIN_ID, text, parse_mode="Markdown")
     await message.answer("✅ Xabaringiz admin'ga yuborildi.")
     await state.clear()
+
+# --- Ortga ---
+async def back_to_main(message: types.Message):
+    await start_handler(message)
+
+# --- Boshqa xabarlar uchun handler ---
+async def handle_other_messages(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    
+    if current_state == ContactAdmin.waiting_message:
+        await process_contact_admin(message, state)
+    elif current_state == Broadcast.waiting_message:
+        await process_broadcast(message, state)
+    else:
+        await message.answer("Iltimos, quyidagi tugmalardan birini tanlang yoki /start buyrug'ini yuboring")
