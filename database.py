@@ -1,27 +1,40 @@
 import sqlite3
 
 def connect_db():
+    """Bazaga ulanish va jadvallarni yaratish"""
     conn = sqlite3.connect("flex.db")
     cur = conn.cursor()
+    
+    # Users jadvalini yaratish (AUTOINCREMENT qo'shildi)
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            tg_id INTEGER,
-            fullname TEXT,
-            birthdate TEXT,
-            join_date TEXT
-        )
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tg_id INTEGER UNIQUE,
+        fullname TEXT,
+        birthdate TEXT,
+        join_date TEXT
+    )
     """)
+    
+    # Messages jadvalini yaratish (FOREIGN KEY qo'shildi)
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY,
-            tg_id INTEGER,
-            message TEXT,
-            date TEXT
-        )
+    CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tg_id INTEGER,
+        message TEXT,
+        date TEXT,
+        FOREIGN KEY (tg_id) REFERENCES users(tg_id)
+    )
     """)
+    
     conn.commit()
+    return conn
+
+def init_db():
+    """Baza jadvallarini ishga tushirish (alohida funksiya)"""
+    conn = connect_db()
     conn.close()
+
 
 def add_user(tg_id, fullname, birthdate, join_date):
     conn = sqlite3.connect("flex.db")
@@ -82,14 +95,3 @@ def get_top_user():
     result = cur.fetchone()
     conn.close()
     return result
-
-def init_db():
-    """Baza faylini va jadvallarni yaratish uchun"""
-    print("Baza ishga tushirilmoqda...")
-    try:
-        connect_db()  # Bu sizning mavjud connect_db funksiyangiz
-        print("✅ Baza muvaffaqiyatli ishga tushirildi")
-        return True
-    except Exception as e:
-        print(f"❌ Xatolik: {e}")
-        return False
