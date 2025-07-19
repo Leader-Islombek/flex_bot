@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from tkinter import Message
 from aiogram import Bot, Dispatcher, types
+from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
@@ -61,7 +61,7 @@ dp.message.register(process_contact_admin, ContactAdmin.waiting_message)
 async def cancel_handler(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("🚫 Amal bekor qilindi.")
-    
+
 # Default handler
 dp.message.register(handle_other_messages)
 
