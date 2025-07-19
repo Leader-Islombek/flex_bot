@@ -220,9 +220,11 @@ async def process_contact_admin(message: types.Message, state: FSMContext):
         print(f"Xatolik admin'ga xabar yuborishda: {e}")
     finally:
         await state.clear()
+
 # --- Ortga ---
 async def back_to_main(message: types.Message):
     await start_handler(message)
+
 
 # --- Boshqa xabarlar uchun handler ---
 async def handle_other_messages(message: types.Message, state: FSMContext):
@@ -233,4 +235,5 @@ async def handle_other_messages(message: types.Message, state: FSMContext):
     elif current_state == Broadcast.waiting_message:
         await process_broadcast(message, state)
     else:
-        await message.answer("Iltimos, quyidagi tugmalardan birini tanlang yoki /start buyrug'ini yuboring")
+        # Only send this if we're not in any state
+        await message.answer("Iltimos, menyudan biror tugmani tanlang yoki /start buyrug'ini yuboring")
