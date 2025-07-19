@@ -82,3 +82,14 @@ def get_top_user():
     result = cur.fetchone()
     conn.close()
     return result
+
+def init_db():
+    """Baza faylini va jadvallarni yaratish uchun"""
+    print("Baza ishga tushirilmoqda...")
+    try:
+        connect_db()  # Bu sizning mavjud connect_db funksiyangiz
+        print("✅ Baza muvaffaqiyatli ishga tushirildi")
+        return True
+    except Exception as e:
+        print(f"❌ Xatolik: {e}")
+        return False
