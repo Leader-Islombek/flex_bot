@@ -161,20 +161,65 @@ async def stats(message: types.Message):
 
 # --- Admin'ga xabar ---
 async def contact_admin_handler(message: types.Message, state: FSMContext):
-    await message.answer("✉️ Admin'ga yuboriladigan xabar matnini yozing:")
+    """Admin'ga xabar yuborishni boshlash"""
+    if message.from_user.id == ADMIN_ID:
+        await message.answer("❌ Siz adminsiz, o'zingizga xabar yuborolmaysiz!")
+        return
+    
+    await message.answer(
+        "✍️ Admin'ga yubormoqchi bo'lgan xabaringizni yozing:\n"
+        "⚠️ Xabar matni 10 belgidan kam bo'lmasligi kerak!\n"
+        "🚫 Bekor qilish uchun /cancel buyrug'ini yuboring"
+    )
     await state.set_state(ContactAdmin.waiting_message)
 
+
 async def process_contact_admin(message: types.Message, state: FSMContext):
-    text = f"📨 *Yangi xabar userdan:*\n\n"
-    text += f"👤 {message.from_user.full_name} (ID: {message.from_user.id})\n"
-    if message.from_user.username:
-        text += f"🔗 @{message.from_user.username}\n"
-    text += f"\n💬 {message.text}"
-
-    await message.bot.send_message(ADMIN_ID, text, parse_mode="Markdown")
-    await message.answer("✅ Xabaringiz admin'ga yuborildi.")
-    await state.clear()
-
+    """Admin'ga xabarni yuborish"""
+    # Xabar uzunligini tekshirish
+    if len(message.text.strip()) < 10:
+        await message.answer("❌ Xabar juda qisqa! Kamida 10 belgi bo'lishi kerak.")
+        return
+    
+    if message.text == "/cancel":
+        await state.clear()
+        await message.answer("✅ Xabar yuborish bekor qilindi.")
+        return
+    
+    try:
+        # Admin'ga formatlangan xabar tayyorlash
+        user_info = (
+            f"👤 Foydalanuvchi: {message.from_user.full_name}\n"
+            f"🆔 ID: {message.from_user.id}\n"
+        )
+        if message.from_user.username:
+            user_info += f"📎 @{message.from_user.username}\n"
+        
+        admin_message = (
+            f"📨 Yangi xabar:\n\n"
+            f"{user_info}\n"
+            f"📝 Xabar matni:\n"
+            f"{message.text}"
+        )
+        
+        # Admin'ga xabar yuborish
+        await message.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=admin_message
+        )
+        
+        await message.answer("✅ Xabaringiz admin'ga muvaffaqiyatli yuborildi!")
+        
+    except Exception as e:
+        error_msg = (
+            "❌ Xabar yuborishda xatolik yuz berdi. "
+            "Iltimos, keyinroq urunib ko'ring yoki "
+            "administrator bilan bog'laning."
+        )
+        await message.answer(error_msg)
+        print(f"Xatolik admin'ga xabar yuborishda: {e}")
+    finally:
+        await state.clear()
 # --- Ortga ---
 async def back_to_main(message: types.Message):
     await start_handler(message)
