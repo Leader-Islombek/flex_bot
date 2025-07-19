@@ -17,6 +17,10 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
+from database import init_db
+
+# Dastur ishga tushganda
+init_db()  # Baza va jadvallarni tekshirib yaratadi
 # --- /start komandasi ---
 @dp.message(Command("start"))
 async def start(message: Message):

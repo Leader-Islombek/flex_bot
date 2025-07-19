@@ -1,4 +1,5 @@
 import sqlite3
+import os
 
 def connect_db():
     conn = sqlite3.connect("flex.db")
@@ -83,13 +84,37 @@ def get_top_user():
     conn.close()
     return result
 
+
+
+
 def init_db():
-    """Baza faylini va jadvallarni yaratish uchun"""
-    print("Baza ishga tushirilmoqda...")
-    try:
-        connect_db()  # Bu sizning mavjud connect_db funksiyangiz
-        print("✅ Baza muvaffaqiyatli ishga tushirildi")
-        return True
-    except Exception as e:
-        print(f"❌ Xatolik: {e}")
-        return False
+    # Baza fayli yo'q bo'lsa yaratish
+    if not os.path.exists('flex.db'):
+        open('flex.db', 'w').close()
+    
+    conn = sqlite3.connect('flex.db')
+    cur = conn.cursor()
+    
+    # Jadval mavjudligini tekshirish
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+    if not cur.fetchone():
+        # Jadval yo'q bo'lsa yaratish
+        cur.execute("""
+        CREATE TABLE users (
+            id INTEGER PRIMARY KEY,
+            tg_id INTEGER,
+            fullname TEXT,
+            birthdate TEXT,
+            join_date TEXT
+        )
+        """)
+        cur.execute("""
+        CREATE TABLE messages (
+            id INTEGER PRIMARY KEY,
+            tg_id INTEGER,
+            message TEXT,
+            date TEXT
+        )
+        """)
+        conn.commit()
+    conn.close()
