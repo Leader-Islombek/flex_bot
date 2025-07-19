@@ -2,7 +2,7 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from datetime import datetime
-from database import get_users
+from database import get_users, add_user
 from config import ADMIN_ID
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
@@ -15,6 +15,15 @@ class ContactAdmin(StatesGroup):
 
 # --- /start handler ---
 async def start_handler(message: types.Message):
+    user = message.from_user
+    
+    # Foydalanuvchini bazaga qo'shamiz
+    added = add_user(
+        tg_id=user.id,
+        fullname=user.full_name,
+        birthdate=None  # Keyinroq to'ldiriladi
+    )
+    
     # Oddiy user tugmalari
     user_buttons = [
         [KeyboardButton(text="📖 Flex haqida")],
@@ -35,6 +44,26 @@ async def start_handler(message: types.Message):
         "👋 Assalomu alaykum!\n\nBotga xush kelibsiz.\nFlex haqida bilish uchun tugmalarni bosing.",
         reply_markup=keyboard
     )
+
+@dp.message_handler(commands=['dbstatus'])
+async def db_status(message: types.Message):
+    with sqlite3.connect('flex.db') as conn:
+        cur = conn.cursor()
+        
+        # Jadval mavjudligi
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = [t[0] for t in cur.fetchall()]
+        
+        # Foydalanuvchilar soni
+        cur.execute("SELECT COUNT(*) FROM users")
+        user_count = cur.fetchone()[0]
+        
+        await message.answer(
+            f"📊 Database status:\n"
+            f"Jadvallar: {', '.join(tables) or 'Yoʻq'}\n"
+            f"Foydalanuvchilar: {user_count}\n"
+            f"Admin ID: {ADMIN_ID}"
+        )
 
 # --- FLEX yosh tekshirish funksiyasi ---
 async def check_age(message: types.Message):

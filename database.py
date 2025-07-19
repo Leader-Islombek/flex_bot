@@ -66,14 +66,22 @@ def init_db():
 # Dastur ishga tushganda baza yaratilishini ta'minlash
 init_db()
 
-def add_user(tg_id, fullname, birthdate, join_date):
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    cur.execute("INSERT INTO users (tg_id, fullname, birthdate, join_date) VALUES (?, ?, ?, ?)",
-                (tg_id, fullname, birthdate, join_date))
-    conn.commit()
-    conn.close()
-
+def add_user(tg_id, fullname, birthdate=None):
+    """Foydalanuvchi qo'shish (to'liq versiya)"""
+    try:
+        with sqlite3.connect('flex.db') as conn:
+            cur = conn.cursor()
+            # JOIN_DATE avtomatik to'ldiriladi
+            cur.execute(
+                "INSERT OR REPLACE INTO users (tg_id, fullname, birthdate) VALUES (?, ?, ?)",
+                (tg_id, fullname, birthdate)
+            )
+            conn.commit()
+            print(f"✅ Foydalanuvchi qo'shildi: {tg_id} | {fullname}")  # Debug
+            return True
+    except Exception as e:
+        print(f"❌ Xatolik (add_user): {e}")
+        return False
 def get_users():
     """Barcha foydalanuvchilarni olish"""
     init_db()  # Jadval mavjudligini qo'shimcha tekshirish
