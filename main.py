@@ -11,7 +11,10 @@ from handlers import (
 )
 from database import get_users
 from aiogram.fsm.storage.memory import MemoryStorage
+from database import init_db
 
+# Dastur boshida
+init_db()
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=BOT_TOKEN)

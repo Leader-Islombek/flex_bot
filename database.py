@@ -29,12 +29,42 @@ def connect_db():
     
     conn.commit()
     return conn
+import os
 
 def init_db():
-    """Baza jadvallarini ishga tushirish (alohida funksiya)"""
-    conn = connect_db()
-    conn.close()
+    """Baza fayli va jadvallarni ishga tushirish"""
+    # Baza faylini tekshirish va yaratish
+    if not os.path.exists('flex.db'):
+        open('flex.db', 'w').close()
+    
+    with sqlite3.connect('flex.db') as conn:
+        cur = conn.cursor()
+        
+        # Users jadvalini yaratish
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tg_id INTEGER UNIQUE,
+            fullname TEXT,
+            birthdate TEXT,
+            join_date TEXT
+        )
+        """)
+        
+        # Messages jadvalini yaratish
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tg_id INTEGER,
+            message TEXT,
+            date TEXT
+        )
+        """)
+        
+        conn.commit()
 
+# Dastur ishga tushganda baza yaratilishini ta'minlash
+init_db()
 
 def add_user(tg_id, fullname, birthdate, join_date):
     conn = sqlite3.connect("flex.db")
@@ -45,12 +75,12 @@ def add_user(tg_id, fullname, birthdate, join_date):
     conn.close()
 
 def get_users():
-    conn = sqlite3.connect("flex.db")
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users")
-    users = cur.fetchall()
-    conn.close()
-    return users
+    """Barcha foydalanuvchilarni olish"""
+    init_db()  # Jadval mavjudligini qo'shimcha tekshirish
+    with sqlite3.connect('flex.db') as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users")
+        return cur.fetchall()
 
 def log_message(tg_id, message, date):
     conn = sqlite3.connect("flex.db")
