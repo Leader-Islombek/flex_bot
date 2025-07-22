@@ -26,7 +26,8 @@ async def start_handler(message: types.Message):
     user_buttons = [
         [KeyboardButton(text="📖 Flex haqida")],
         [KeyboardButton(text="📝 Yoshni tekshirish")],
-        [KeyboardButton(text="✉️ Admin'ga xabar")]
+        [KeyboardButton(text="✉️ Admin'ga xabar")],
+        [KeyboardButton(text="🔔 Yangiliklar kanali")]
     ]
 
     if message.from_user.id == ADMIN_ID:
@@ -48,8 +49,9 @@ async def flex_info(message: types.Message):
     text = """
 🇺🇸 *FLEX nima?*
 
-FLEX (Future Leaders Exchange) - AQSh hukumati tomonidan moliyalashtiriladigan dastur bo'lib, o'rta maktab o'quvchilarini 1 yil davomida Amerika maktabida o'qish va amerikalik oilada yashash imkonini beradi.
-
+FLEX (Future Leaders Exchange) - AQSh hukumati tomonidan moliyalashtiriladigan dastur bo'lib, o'rta maktab o'quvchilarini yani 9 10 sinflarni 1 yil davomida Amerika maktabida o'qish va amerikalik oilada yashash imkonini beradi.
+Nimalar Boladi?
+✅ 1 yil davomida AQShda o'qish
 ✅ Xarajatlar to'liq qoplanadi  
 ✅ Ingliz tilini mukammal o'rganish  
 ✅ Yetakchilik va madaniyat almashinuvi tajribasi

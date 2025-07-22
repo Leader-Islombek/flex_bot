@@ -22,7 +22,7 @@ from handlers import (
     contact_admin_handler,
     process_contact_admin,
     back_to_main,
-    handle_other_messages
+    handle_other_messages,
 )
 from aiogram.fsm.state import State, StatesGroup
 
@@ -51,7 +51,9 @@ dp.message.register(stats, lambda message: message.text == "📊 Statistika" and
 dp.message.register(broadcast_handler, lambda message: message.text == "✉️ Broadcast" and message.from_user.id == ADMIN_ID)
 dp.message.register(contact_admin_handler, lambda message: message.text == "✉️ Admin'ga xabar")
 dp.message.register(back_to_main, lambda message: message.text == "🔙 Ortga" and message.from_user.id == ADMIN_ID)
-
+@dp.message(lambda message: message.text == "🔔 Yangiliklar kanali")
+async def send_channel_link(message: Message):
+    await message.answer("🇺🇸 FLEX yangiliklar kanalimizga qo‘shiling:\nhttps://t.me/flexuzbinfo")
 # Special handlers
 dp.message.register(check_age, lambda message: message.text and len(message.text.split('-')) == 3)
 dp.message.register(process_broadcast, Broadcast.waiting_message)
