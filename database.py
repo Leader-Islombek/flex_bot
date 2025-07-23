@@ -1,6 +1,7 @@
 import os
 from databases import Database
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime, ForeignKey, Index, func
+from sqlalchemy import BigInteger
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,19 +16,18 @@ users = Table(
     "users",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("tg_id", Integer, unique=True, nullable=False),
+    Column("tg_id", BigInteger, unique=True, nullable=False),  # 🛠 BigInteger
     Column("full_name", String, nullable=False),
     Column("birth_date", String),
     Column("join_date", DateTime, server_default=func.now()),
     Column("username", String)
 )
-
 # Messages table
 messages = Table(
     "messages",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("tg_id", Integer, ForeignKey("users.tg_id"), nullable=False),
+    Column("tg_id", BigInteger, ForeignKey("users.tg_id"), nullable=False),  # 🛠 BigInteger
     Column("message_text", String, nullable=False),
     Column("sent_date", DateTime, server_default=func.now())
 )
