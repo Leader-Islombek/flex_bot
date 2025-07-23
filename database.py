@@ -72,3 +72,7 @@ async def log_message(tg_id, message_text):
         message_text=message_text
     )
     return await database.execute(insert_query)
+
+async def update_birth_date(tg_id: int, birth_date: str):
+    query = users.update().where(users.c.tg_id == tg_id).values(birth_date=birth_date)
+    await database.execute(query)

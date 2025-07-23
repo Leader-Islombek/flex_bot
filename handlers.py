@@ -72,11 +72,16 @@ async def ask_birthdate(message: types.Message):
 
 # --- Yoshni hisoblash ---
 async def check_age(message: types.Message):
+    from database import update_birth_date  # ⚠️ import qil
+
     try:
         birthdate = datetime.strptime(message.text, "%Y-%m-%d") # type: ignore
     except ValueError:
         await message.answer("❌ Noto'g'ri format. Iltimos, YYYY-MM-DD formatida kiriting.")
         return
+
+    # 🔥 Tug‘ilgan sanani bazaga saqlaymiz
+    await update_birth_date(message.from_user.id, message.text)  # type: ignore
 
     today = datetime.today()
     age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
@@ -101,6 +106,7 @@ async def check_age(message: types.Message):
 {result}
 """
     await message.answer(response)
+
 
 
 # --- Admin panel ---
