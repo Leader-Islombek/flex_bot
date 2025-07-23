@@ -7,7 +7,7 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-database = Database(DATABASE_URL)
+database = Database(DATABASE_URL) # type: ignore
 metadata = MetaData()
 
 # Users table
@@ -37,7 +37,7 @@ Index("idx_users_tg_id", users.c.tg_id)
 Index("idx_messages_tg_id", messages.c.tg_id)
 
 # Create engine and tables
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL) # type: ignore
 metadata.create_all(engine)
 
 # Add user if not exists
@@ -62,7 +62,7 @@ async def get_users():
 
 # Get user count
 async def get_user_count():
-    query = users.count()
+    query = users.count() # type: ignore
     return await database.fetch_val(query)
 
 # Log message

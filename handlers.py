@@ -20,10 +20,10 @@ class ContactAdmin(StatesGroup):
 async def start_handler(message: types.Message):
     user = message.from_user
     added = await add_user_if_not_exists(  # ✅ await qo‘shildi
-        tg_id=user.id,
-        full_name=user.full_name,
+        tg_id=user.id, # type: ignore
+        full_name=user.full_name, # type: ignore
         birth_date=None,
-        username=user.username
+        username=user.username # type: ignore
     )
 
     user_buttons = [
@@ -33,7 +33,7 @@ async def start_handler(message: types.Message):
         [KeyboardButton(text="🔔 Yangiliklar kanali")]
     ]
 
-    if user.id == ADMIN_ID:
+    if user.id == ADMIN_ID: # type: ignore
         user_buttons.append([KeyboardButton(text="👤 Admin panel")])
 
     keyboard = ReplyKeyboardMarkup(
@@ -73,7 +73,7 @@ async def ask_birthdate(message: types.Message):
 # --- Yoshni hisoblash ---
 async def check_age(message: types.Message):
     try:
-        birthdate = datetime.strptime(message.text, "%Y-%m-%d")
+        birthdate = datetime.strptime(message.text, "%Y-%m-%d") # type: ignore
     except ValueError:
         await message.answer("❌ Noto'g'ri format. Iltimos, YYYY-MM-DD formatida kiriting.")
         return
@@ -119,7 +119,7 @@ async def admin_panel(message: types.Message):
 
 # --- Botni to‘xtatish komandasi ---
 async def stop_bot(message: types.Message):
-    if message.from_user.id == ADMIN_ID:
+    if message.from_user.id == ADMIN_ID: # type: ignore
         await message.answer("🛑 Bot to‘xtatilmoqda...")
         await bot.session.close()
         sys.exit()
@@ -176,7 +176,7 @@ async def process_broadcast(message: types.Message, state: FSMContext):
     success = 0
     for user in users:
         try:
-            await message.bot.send_message(user[1], message.text)
+            await message.bot.send_message(user[1], message.text) # type: ignore
             success += 1
         except Exception as e:
             print(f"Xatolik user {user[1]}ga xabar yuborishda: {e}")
@@ -193,7 +193,7 @@ async def stats(message: types.Message):
 
 # --- Admin'ga xabar ---
 async def contact_admin_handler(message: types.Message, state: FSMContext):
-    if message.from_user.id == ADMIN_ID:
+    if message.from_user.id == ADMIN_ID: # type: ignore
         await message.answer("❌ Siz adminsiz, o'zingizga xabar yuborolmaysiz!")
         return
     
@@ -206,7 +206,7 @@ async def contact_admin_handler(message: types.Message, state: FSMContext):
 
 
 async def process_contact_admin(message: types.Message, state: FSMContext):
-    if len(message.text.strip()) < 10:
+    if len(message.text.strip()) < 10: # type: ignore
         await message.answer("❌ Xabar juda qisqa! Kamida 10 belgi bo'lishi kerak.")
         return
     
@@ -217,11 +217,11 @@ async def process_contact_admin(message: types.Message, state: FSMContext):
     
     try:
         user_info = (
-            f"👤 Foydalanuvchi: {message.from_user.full_name}\n"
-            f"🆔 ID: {message.from_user.id}\n"
+            f"👤 Foydalanuvchi: {message.from_user.full_name}\n" # type: ignore
+            f"🆔 ID: {message.from_user.id}\n" # type: ignore
         )
-        if message.from_user.username:
-            user_info += f"📎 @{message.from_user.username}\n"
+        if message.from_user.username: # type: ignore
+            user_info += f"📎 @{message.from_user.username}\n" # type: ignore
         
         admin_message = (
             f"📨 Yangi xabar:\n\n"
@@ -230,7 +230,7 @@ async def process_contact_admin(message: types.Message, state: FSMContext):
             f"{message.text}"
         )
         
-        await message.bot.send_message(chat_id=ADMIN_ID, text=admin_message)
+        await message.bot.send_message(chat_id=ADMIN_ID, text=admin_message) # type: ignore
         await message.answer("✅ Xabaringiz admin'ga muvaffaqiyatli yuborildi!")
         
     except Exception as e:

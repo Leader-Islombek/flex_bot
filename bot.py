@@ -1,9 +1,13 @@
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.client.default import DefaultBotProperties
 from config import BOT_TOKEN
 
-# Bot instance
-bot = Bot(token=BOT_TOKEN, parse_mode="HTML") # type: ignore
+# Bot instance with default parse_mode
+bot = Bot(
+    token=BOT_TOKEN, # type: ignore
+    default=DefaultBotProperties(parse_mode="HTML")
+)
 
-# Dispatcher instance with memory storage (simple FSM)
+# Dispatcher instance
 dp = Dispatcher(storage=MemoryStorage())
