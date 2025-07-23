@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from config import BOT_TOKEN, ADMIN_ID
-from database import init_db
+from database import database
 from handlers import (
     Broadcast,
     ContactAdmin,
@@ -70,12 +70,15 @@ dp.message.register(handle_other_messages)
 async def on_startup():
     """Bot ishga tushganda"""
     logger.info("Bot ishga tushmoqda...")
+    await database.connect()
     await bot.send_message(ADMIN_ID, "🤖 Bot ishga tushdi")
 
 async def on_shutdown():
     """Bot to'xtaganda"""
     logger.info("Bot to'xtamoqda...")
-    await bot.send_message(ADMIN_ID, "🤖 Bot to'xtadi")
+    await database.disconnect()
+    await bot.send_message(ADMIN_ID, "🤖 Bot to'xtatildi")
+    
 
 async def main():
     await on_startup()
