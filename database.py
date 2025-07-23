@@ -1,7 +1,7 @@
 import os
 from databases import Database
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime, ForeignKey, Index, func
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger,select,func
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -62,7 +62,7 @@ async def get_users():
 
 # Get user count
 async def get_user_count():
-    query = users.count() # type: ignore
+    query = select(func.count()).select_from(users)
     return await database.fetch_val(query)
 
 # Log message
