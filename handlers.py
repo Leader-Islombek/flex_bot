@@ -7,7 +7,7 @@ from bot import bot
 from database import get_users, add_user_if_not_exists, get_user_count
 from config import ADMIN_ID
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
+from utils import calculate_age
 
 # --- States ---
 class Broadcast(StatesGroup):
@@ -143,9 +143,10 @@ async def user_list(message: types.Message):
         join_date = user[4]
 
         if birth_date:
-            birth_year = int(birth_date.split("-")[0])
-            this_year = datetime.now().year
-            age = this_year - birth_year
+            try:
+                age = calculate_age(birth_date)
+            except:
+                age = "Xato"
         else:
             age = "Noma'lum"
 
