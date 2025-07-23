@@ -1,7 +1,9 @@
+import sys
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from datetime import datetime
+from main import bot
 from database import get_users, add_user_if_not_exists, get_user_count
 from config import ADMIN_ID
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -111,6 +113,15 @@ async def admin_panel(message: types.Message):
     await message.answer("👤 *Admin panel*\n\nKerakli bo'limni tanlang:", reply_markup=keyboard, parse_mode="Markdown")
 
 from datetime import datetime
+
+# --- Botni to‘xtatish komandasi ---
+async def stop_bot(message: types.Message):
+    if message.from_user.id == ADMIN_ID:
+        await message.answer("🛑 Bot to‘xtatilmoqda...")
+        await bot.session.close()
+        sys.exit()
+    else:
+        await message.answer("❌ Siz admin emassiz.")
 
 # --- Userlar ro'yxati ---
 async def user_list(message: types.Message):

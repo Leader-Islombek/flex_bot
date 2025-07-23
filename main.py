@@ -24,6 +24,7 @@ from handlers import (
     back_to_main,
     handle_other_messages,
 )
+from handlers import stop_bot
 from aiogram.fsm.state import State, StatesGroup
 
 # Configure logging
@@ -36,8 +37,10 @@ dp = Dispatcher(storage=MemoryStorage())
 
 # --- Register all handlers ---
 
+
 # Command handlers
 dp.message.register(start_handler, Command("start"))
+dp.message.register(stop_bot, Command("stopbot"))
 
 # Text message handlers
 dp.message.register(flex_info, lambda message: message.text == "📖 Flex haqida")
@@ -56,6 +59,7 @@ dp.message.register(check_age, lambda message: message.text and len(message.text
 dp.message.register(process_broadcast, Broadcast.waiting_message)
 dp.message.register(process_contact_admin, ContactAdmin.waiting_message)
 
+
 @dp.message(Command("cancel"))
 async def cancel_handler(message: Message, state: FSMContext):
     await state.clear()
@@ -65,10 +69,14 @@ async def cancel_handler(message: Message, state: FSMContext):
 dp.message.register(handle_other_messages)
 
 async def on_startup():
-    """Bot ishga tushganda"""
     logger.info("Bot ishga tushmoqda...")
-    await database.connect()
+    try:
+        await database.connect()
+        logger.info("Database ulandi.")
+    except Exception as e:
+        logger.error(f"Database ulanishida xatolik: {e}")
     await bot.send_message(ADMIN_ID, "🤖 Bot ishga tushdi")
+
 
 async def on_shutdown():
     """Bot to'xtaganda"""
