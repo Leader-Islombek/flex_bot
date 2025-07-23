@@ -164,7 +164,7 @@ async def broadcast_handler(message: types.Message, state: FSMContext):
     await state.set_state(Broadcast.waiting_message)
 
 async def process_broadcast(message: types.Message, state: FSMContext):
-    users = get_users()
+    users = await get_users()
     if not users:
         await message.answer("⚠️ Bazada foydalanuvchilar topilmadi!")
         await state.clear()
@@ -183,7 +183,7 @@ async def process_broadcast(message: types.Message, state: FSMContext):
 
 # --- Statistika ---
 async def stats(message: types.Message):
-    count = get_user_count()
+    count = await get_user_count()
     await message.answer(f"📊 *Bot statistikasi:*\n\n👥 Jami foydalanuvchilar: {count}", parse_mode="Markdown")
 
 # --- Admin'ga xabar ---
