@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from config import ADMIN_ID
 from database import database
-from bot import bot, dp  # <-- bot.py dan import
+from bot import bot, dp
 from handlers import (
     Broadcast,
     ContactAdmin,
@@ -27,13 +27,15 @@ from handlers import (
 )
 from aiogram.fsm.state import State, StatesGroup
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# --- Configure logging ---
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 # --- Register all handlers ---
-
 
 # Command handlers
 dp.message.register(start_handler, Command("start"))
@@ -48,15 +50,18 @@ dp.message.register(stats, lambda message: message.text == "📊 Statistika" and
 dp.message.register(broadcast_handler, lambda message: message.text == "✉️ Broadcast" and message.from_user.id == ADMIN_ID)
 dp.message.register(contact_admin_handler, lambda message: message.text == "✉️ Admin'ga xabar")
 dp.message.register(back_to_main, lambda message: message.text == "🔙 Ortga" and message.from_user.id == ADMIN_ID)
+
+# Yangiliklar kanali
 @dp.message(lambda message: message.text == "🔔 Yangiliklar kanali")
 async def send_channel_link(message: Message):
     await message.answer("🇺🇸 FLEX yangiliklar kanalimizga qo‘shiling:\nhttps://t.me/flexuzbinfo")
+
 # Special handlers
 dp.message.register(check_age, lambda message: message.text and len(message.text.split('-')) == 3)
 dp.message.register(process_broadcast, Broadcast.waiting_message)
 dp.message.register(process_contact_admin, ContactAdmin.waiting_message)
 
-
+# Cancel handler
 @dp.message(Command("cancel"))
 async def cancel_handler(message: Message, state: FSMContext):
     await state.clear()
@@ -65,27 +70,35 @@ async def cancel_handler(message: Message, state: FSMContext):
 # Default handler
 dp.message.register(handle_other_messages)
 
+
+# --- Lifecycle events ---
 async def on_startup():
-    logger.info("Bot ishga tushmoqda...")
+    logger.info("🔄 Bot ishga tushmoqda...")
     try:
         await database.connect()
-        logger.info("Database ulandi.")
+        logger.info("✅ Database ulandi.")
     except Exception as e:
-        logger.error(f"Database ulanishida xatolik: {e}")
+        logger.error(f"❌ Database ulanishida xatolik: {e}")
     await bot.send_message(ADMIN_ID, "🤖 Bot ishga tushdi")
 
 
 async def on_shutdown():
-    """Bot to'xtaganda"""
-    logger.info("Bot to'xtamoqda...")
+    logger.info("🔻 Bot to'xtamoqda...")
     await database.disconnect()
     await bot.send_message(ADMIN_ID, "🤖 Bot to'xtatildi")
-    
 
+
+# --- Main function ---
 async def main():
     await on_startup()
-    await dp.start_polling(bot)
-    await on_shutdown()
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await on_shutdown()
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("🚨 Bot to'xtatildi (KeyboardInterrupt yoki SystemExit)")
