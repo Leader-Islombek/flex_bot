@@ -3,10 +3,11 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from datetime import datetime
-from main import bot
+from bot import bot  # <-- main.py emas, bot.py dan
 from database import get_users, add_user_if_not_exists, get_user_count
 from config import ADMIN_ID
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
 
 # --- States ---
 class Broadcast(StatesGroup):

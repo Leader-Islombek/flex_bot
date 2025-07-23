@@ -1,12 +1,12 @@
 import asyncio
 import logging
-from aiogram import Bot, Dispatcher, types
+from aiogram import types
 from aiogram.types import Message
 from aiogram.filters import Command
-from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
-from config import BOT_TOKEN, ADMIN_ID
+from config import ADMIN_ID
 from database import database
+from bot import bot, dp  # <-- bot.py dan import
 from handlers import (
     Broadcast,
     ContactAdmin,
@@ -23,17 +23,14 @@ from handlers import (
     process_contact_admin,
     back_to_main,
     handle_other_messages,
+    stop_bot,
 )
-from handlers import stop_bot
 from aiogram.fsm.state import State, StatesGroup
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize bot and dispatcher
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher(storage=MemoryStorage())
 
 # --- Register all handlers ---
 
