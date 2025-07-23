@@ -110,9 +110,11 @@ async def admin_panel(message: types.Message):
     )
     await message.answer("👤 *Admin panel*\n\nKerakli bo'limni tanlang:", reply_markup=keyboard, parse_mode="Markdown")
 
+from datetime import datetime
+
 # --- Userlar ro'yxati ---
 async def user_list(message: types.Message):
-    users = get_users()
+    users = await get_users()  # ✅ await qo'shildi
     if not users:
         await message.answer("🚫 Hech qanday foydalanuvchi topilmadi.")
         return
@@ -121,17 +123,28 @@ async def user_list(message: types.Message):
     for idx, user in enumerate(users, 1):
         user_id = user[1]  # tg_id
         full_name = user[2]  # full_name
+        birth_date = user[3]  # birth_date
         username = f"@{user[5]}" if user[5] else "Yo'q"  # username
         join_date = user[4]  # join_date
-        
+
+        # 🧮 Yosh hisoblash
+        if birth_date:
+            birth_year = int(birth_date.split("-")[0])
+            this_year = datetime.now().year
+            age = this_year - birth_year
+        else:
+            age = "Noma'lum"
+
         text += (
             f"{idx}. <b>ID:</b> {user_id}\n"
             f"   <b>Ism:</b> {full_name}\n"
             f"   <b>Username:</b> {username}\n"
+            f"   <b>Yosh:</b> {age}\n"
             f"   <b>Qo'shilgan:</b> {join_date}\n\n"
         )
 
     await message.answer(text, parse_mode="HTML")
+
 
 # --- Broadcast ---
 async def broadcast_handler(message: types.Message, state: FSMContext):
