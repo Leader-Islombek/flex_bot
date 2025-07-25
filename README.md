@@ -1,4 +1,4 @@
-# 🇺🇸 FlexUzbBot
+# ✔️ FlexUzbBot
 
 **FLEX Uzbekistan Telegram bot**
 
