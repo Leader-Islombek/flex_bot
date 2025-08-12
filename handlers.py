@@ -60,7 +60,7 @@ Nimalar bo'ladi?
 ✅ Ingliz tilini mukammal o'rganish  
 ✅ Yetakchilik va madaniyat almashinuvi tajribasi
 
-🔗 *Batafsil ma'lumot:* [Amerika Kengashlari FLEX bo'limi](https://americancouncils.org.uz/flex)
+🔗 *Batafsil ma'lumot:* [Amerika Kengashlari FLEX bo'limi](https://www.discoverflex.org/)
 """
     await message.answer(text, parse_mode="Markdown")
 
