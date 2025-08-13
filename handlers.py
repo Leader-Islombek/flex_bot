@@ -92,7 +92,7 @@ async def check_age(message: types.Message):
 
     if flex_age < 15:
         result = "❌ Afsuski, FLEX uchun yoshingiz juda kichik."
-    elif flex_age > 17:
+    elif flex_age > 16:
         result = "❌ Afsuski, FLEX uchun yoshingiz juda katta."
     else:
         result = "✅ Tabriklaymiz! Siz FLEX uchun yosh talabiga mos kelasiz."
@@ -100,7 +100,7 @@ async def check_age(message: types.Message):
     response = f"""
 📅 Tug'ilgan sana: {birthdate.strftime('%Y-%m-%d')}
 🔢 Yosh: {age}
-🗓 O'tgan oylar: {total_months}
+🗓 yashagan jami oylaringiz: {total_months}
 
 🎯 FLEX tekshirish natijasi:
 {result}
